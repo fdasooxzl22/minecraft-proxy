@@ -27,10 +27,16 @@ if ! echo "$EXTERNAL_IP" | grep -qE '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{
   exit 1
 fi
 
-# Validate each octet is between 0-255
+# Validate each octet is numeric and between 0-255
 for octet in $(echo "$EXTERNAL_IP" | tr '.' ' '); do
-  if [ "$octet" -gt 255 ] 2>/dev/null || [ "$octet" -lt 0 ] 2>/dev/null; then
-    echo "Error: Invalid IP address octet: $EXTERNAL_IP" >&2
+  # Check if octet is numeric
+  if ! echo "$octet" | grep -qE '^[0-9]+$'; then
+    echo "Error: Non-numeric IP address octet: $EXTERNAL_IP" >&2
+    exit 1
+  fi
+  # Check if octet is in valid range
+  if [ "$octet" -gt 255 ] || [ "$octet" -lt 0 ]; then
+    echo "Error: Invalid IP address octet range: $EXTERNAL_IP" >&2
     exit 1
   fi
 done
