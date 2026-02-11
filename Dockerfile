@@ -2,8 +2,10 @@ FROM alpine:latest
 
 RUN apk add --no-cache dante-server
 
-COPY sockd.conf /etc/sockd.conf
+COPY sockd.conf.template /etc/sockd.conf.template
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 1080
 
-CMD ["sockd"]
+ENTRYPOINT ["/entrypoint.sh"]
