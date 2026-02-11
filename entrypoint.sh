@@ -25,9 +25,8 @@ fi
 
 echo "Detected external IP: $EXTERNAL_IP"
 
-# Replace placeholder with actual IP (escape forward slashes for sed)
-ESCAPED_IP=$(echo "$EXTERNAL_IP" | sed 's/\//\\\//g')
-sed "s/EXTERNAL_IP/$ESCAPED_IP/g" /etc/sockd.conf.template > /etc/sockd.conf
+# Replace placeholder with actual IP
+sed "s/EXTERNAL_IP/$EXTERNAL_IP/g" /etc/sockd.conf.template > /etc/sockd.conf
 
 if [ -n "$DEBUG" ]; then
     echo "Configuration file generated:"
