@@ -2,9 +2,15 @@
 set -e
 
 # Detect external IP address (BusyBox-compatible)
-EXTERNAL_IP=$(ip -4 addr show eth0 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1 | head -1)
+# Try to get primary interface IP using route
+EXTERNAL_IP=$(ip -4 route get 1.1.1.1 2>/dev/null | grep -o 'src [0-9.]*' | awk '{print $2}' | head -1)
 
-# Fallback to hostname -i if eth0 detection fails
+# Fallback to eth0 if route method fails
+if [ -z "$EXTERNAL_IP" ]; then
+  EXTERNAL_IP=$(ip -4 addr show eth0 2>/dev/null | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1 | head -1)
+fi
+
+# Fallback to hostname -i if other methods fail
 if [ -z "$EXTERNAL_IP" ]; then
   EXTERNAL_IP=$(hostname -i | awk '{print $1}')
 fi
@@ -15,11 +21,19 @@ if [ -z "$EXTERNAL_IP" ]; then
   exit 1
 fi
 
-# Check if IP address is in valid format (basic validation)
+# Validate IP address format and octet ranges
 if ! echo "$EXTERNAL_IP" | grep -qE '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'; then
   echo "Error: Invalid IP address format: $EXTERNAL_IP" >&2
   exit 1
 fi
+
+# Validate each octet is between 0-255
+for octet in $(echo "$EXTERNAL_IP" | tr '.' ' '); do
+  if [ "$octet" -gt 255 ] 2>/dev/null || [ "$octet" -lt 0 ] 2>/dev/null; then
+    echo "Error: Invalid IP address octet: $EXTERNAL_IP" >&2
+    exit 1
+  fi
+done
 
 echo "Using external IP: $EXTERNAL_IP"
 
